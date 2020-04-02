@@ -1,0 +1,3 @@
+/Users/ginray/CLionProjects/huawei_contest/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/ginray/CLionProjects/huawei_contest/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/ginray/CLionProjects/huawei_contest/cmake-build-debug/CMakeFiles/huawei_contest.dir
