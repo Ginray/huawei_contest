@@ -5,13 +5,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <map>
+#include <ctime>
+#include <stack>
+
+#define DEBUG true
 
 using namespace std;
+
 
 const int maxn = 560000 + 5;
 
 int u[maxn], v[maxn];
 int first[maxn], nxt[maxn];
+int banned[maxn];
+int rudu[maxn];
+
+vector<vector<int> > visit_point[maxn];
 
 int data_num = 0;
 int point_num = 0;
@@ -22,8 +31,8 @@ map<int, int> point_map_reverse;
 
 int result_num = 0;
 
-string input_path = "../data/test_data.txt";
-char out_path[50] = "../projects/student/result.txt";
+string input_path = "../data/test_data_github.txt";
+char out_path[50] = "../projects/student/result_github.txt";
 
 
 void readTxt(string file) {
@@ -58,6 +67,7 @@ void readTxt(string file) {
             to = point_map[to];
         }
 
+        rudu[to] += 1;
         u[i] = from;
         v[i] = to;
         nxt[i] = first[u[i]];
@@ -65,6 +75,28 @@ void readTxt(string file) {
         i++;
     }
     infile.close();
+}
+
+
+void TopologicalSort() {
+    stack<int> s;
+    for (int i = 1; i <= point_num; i++) {
+        if (rudu[i] == 0)
+            s.push(i);
+    }
+
+    while (!s.empty()) {
+        int now = s.top();
+        s.pop();
+        banned[now] = 1;
+        int k = first[now];
+        while (k != 0) {
+            if (--rudu[v[k]] == 0)
+                s.push(v[k]);
+            k = nxt[k];
+        }
+    }
+
 }
 
 void dfs(int now, int st_point, vector<int> point_data, int point_len) {
@@ -117,15 +149,18 @@ void print_result() {
 
     FILE *fp = fopen(out_path, "w+");
 
-    printf("%d\n", result_num);
+    if (DEBUG)
+        printf("%d\n", result_num);
     fprintf(fp, "%d\n", result_num);
 
     for (int i = 0; i < result_num; i++) {
         for (int j = 0; j < result[i].size() - 2; j++) {
-            printf("%d,", result[i][j]);
+            if (DEBUG)
+                printf("%d,", result[i][j]);
             fprintf(fp, "%d,", result[i][j]);
         }
-        printf("%d\n", result[i][result[i].size() - 2]);
+        if (DEBUG)
+            printf("%d\n", result[i][result[i].size() - 2]);
         fprintf(fp, "%d\n", result[i][result[i].size() - 2]);
     }
 
@@ -135,14 +170,31 @@ void print_result() {
 
 int main() {
 
+    clock_t startTime, endTime;
+    if (DEBUG) {
+        startTime = clock();
+    }
+
     readTxt(input_path);
+    if (DEBUG) {
+        printf("point_num = %d\n", point_num);
+    }
+    TopologicalSort();
     for (int i = 1; i <= point_num; i++) {
-        vector<int> temp;
-        temp.push_back(i);
-        dfs(i, i, temp, 1);
+        if (banned[i] == 0) {
+            printf("%d\n", i);
+            vector<int> temp;
+            temp.push_back(i);
+            dfs(i, i, temp, 1);
+        }
     }
 
     sort_result();
     print_result();
+
+    if (DEBUG) {
+        endTime = clock();
+        cout << "The run time is: " << (double) (endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
+    }
     return 0;
 }
