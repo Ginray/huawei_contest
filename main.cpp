@@ -2,13 +2,13 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
 #include <map>
 #include <ctime>
 #include <stack>
+#include <vector>
 
-#define DEBUG true
+#define DEBUG false
 
 using namespace std;
 
@@ -31,8 +31,8 @@ map<int, int> point_map_reverse;
 
 int result_num = 0;
 
-string input_path = "../data/test_data_github.txt";
-char out_path[50] = "../projects/student/result_github.txt";
+string input_path = "/data/test_data.txt";
+char out_path[50] = "/projects/student/result.txt";
 
 
 void readTxt(string file) {
@@ -182,7 +182,7 @@ int main() {
     TopologicalSort();
     for (int i = 1; i <= point_num; i++) {
         if (banned[i] == 0) {
-            printf("%d\n", i);
+//            printf("%d\n", i);
             vector<int> temp;
             temp.push_back(i);
             dfs(i, i, temp, 1);

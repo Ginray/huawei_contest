@@ -15,14 +15,14 @@ algorithm
 -
 fstream
 -
-stdio.h
--
-string.h
+cstdio
 -
 map
 -
 ctime
 -
 stack
+-
+vector
 -
 
