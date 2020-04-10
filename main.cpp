@@ -8,19 +8,20 @@
 #include <stack>
 #include <vector>
 
-#define DEBUG false
+#define DEBUG true
 
 using namespace std;
 
 
 const int maxn = 560000 + 5;
 
+int visit[maxn];
+int visit_whole[maxn];
+
 int u[maxn], v[maxn];
 int first[maxn], nxt[maxn];
 int banned[maxn];
 int rudu[maxn];
-
-vector<vector<int> > visit_point[maxn];
 
 int data_num = 0;
 int point_num = 0;
@@ -31,14 +32,14 @@ map<int, int> point_map_reverse;
 
 int result_num = 0;
 
-string input_path = "/data/test_data.txt";
-char out_path[50] = "/projects/student/result.txt";
+string input_path = "../data/test_data_sp.txt";
+char out_path[50] = "../projects/student/result_sp.txt";
 
 
 void readTxt(string file) {
 
     ifstream infile;
-    infile.open(file.data());
+    infile.open(file.data(), ios::in);
 
     string s;
     int i = 1;
@@ -99,36 +100,105 @@ void TopologicalSort() {
 
 }
 
-void dfs(int now, int st_point, vector<int> point_data, int point_len) {
-    if (point_len > 8)
+void
+dfs(int now, vector<int> point_data, int search_number, int search_flag, int search_deep, int sp_num, int pre_num) {
+    if (visit_whole[now] >= 1 && visit_whole[now] < search_number)
         return;
-    if (point_map_reverse[st_point] > point_map_reverse[now])
+
+    if (search_deep <= 0)
         return;
-    if (st_point == now && point_len >= 4) {
-        vector<int> temp;
-        for (int i = 0; i < point_data.size(); i++) {
-            temp.push_back(point_map_reverse[point_data[i]]);
+    int now_search_deep = search_deep;
+    int now_search_flag = search_flag;
+    int now_sp_num = sp_num;
+    if (search_flag) { //搜索之前已经搜索过的点
+        now_search_deep--;
+    } else {
+        if (visit_whole[now] == search_number) {//在当前连通分量中且已经访问过，那么只需要访问下面6层就行了。
+            now_search_flag = 1;
+            now_search_deep = 7;
+            now_sp_num = pre_num;  //之后找到的环中必须包含pre_num，不然找到的环是重复的
         }
-        result.push_back(temp);
-        result_num++;
+    }
+
+    visit_whole[now] = search_number;
+
+
+    if (banned[now])
+        return;
+    if (visit[now]) {
+        stack<int> temp;
+
+        int temp_len = 0;
+        int finded = 0;
+        int if_find_sp_num = 0;
+
+        for (int i = point_data.size() - 2; i >= 0; i--) {
+            if (point_data[i] == sp_num)
+                if_find_sp_num = 1;
+            temp.push(point_map_reverse[point_data[i]]);
+            temp_len++;
+            if (point_data[i] == now) {
+                finded = 1;
+                break;
+            }
+            if (temp_len > 6)
+                break;
+        }
+
+        if (finded && temp_len >= 3) {
+            vector<int> temp_v;
+            while (!temp.empty()) {
+                temp_v.push_back(temp.top());
+                temp.pop();
+            }
+            if (search_flag == 1) {
+                if (if_find_sp_num == 1) {
+                    result.push_back(temp_v);
+                    result_num++;
+                }
+            } else {
+                result.push_back(temp_v);
+                result_num++;
+            }
+            temp_v.clear();
+        }
         return;
     }
-    if (point_len > 1) {
-        auto find_loop = find(point_data.begin(), point_data.end() - 1, now);
-        if (find_loop != point_data.end() - 1) { // 存在两个循环了，终止
-            return;
-        }
-    }
+    visit[now] = 1;
 
     int k = first[now];
     while (k != 0) {
 //        printf("%d %d\n",u[k],v[k]);
+
         point_data.push_back(v[k]);
-        dfs(v[k], st_point, point_data, point_len + 1);
+        dfs(v[k], point_data, search_number, now_search_flag, now_search_deep, now_sp_num, now);
         point_data.pop_back();
         k = nxt[k];
     }
+    visit[now] = 0;
 
+}
+
+void adjust_result() {
+    vector<int> temp;
+    for (int i = 0; i < result.size(); i++) {
+        temp.clear();
+        int min = result[i][0];
+        int pos = 0;
+        for (int j = 1; j < result[i].size(); j++) {
+            if (result[i][j] < min) {
+                min = result[i][j];
+                pos = j;
+            }
+        }
+        if (pos != 0) {
+            for (int k = pos; k < result[i].size(); k++)
+                temp.push_back(result[i][k]);
+            for (int k = 0; k < pos; k++)
+                temp.push_back(result[i][k]);
+            result[i] = temp;
+        }
+    }
 }
 
 int cmp(vector<int> a, vector<int> b) {
@@ -147,21 +217,21 @@ void sort_result() {
 
 void print_result() {
 
-    FILE *fp = fopen(out_path, "w+");
+    FILE *fp = fopen(out_path, "w");
 
     if (DEBUG)
         printf("%d\n", result_num);
     fprintf(fp, "%d\n", result_num);
 
     for (int i = 0; i < result_num; i++) {
-        for (int j = 0; j < result[i].size() - 2; j++) {
+        for (int j = 0; j < result[i].size() - 1; j++) {
             if (DEBUG)
                 printf("%d,", result[i][j]);
             fprintf(fp, "%d,", result[i][j]);
         }
         if (DEBUG)
-            printf("%d\n", result[i][result[i].size() - 2]);
-        fprintf(fp, "%d\n", result[i][result[i].size() - 2]);
+            printf("%d\n", result[i][result[i].size() - 1]);
+        fprintf(fp, "%d\n", result[i][result[i].size() - 1]);
     }
 
     fclose(fp);
@@ -181,14 +251,15 @@ int main() {
     }
     TopologicalSort();
     for (int i = 1; i <= point_num; i++) {
-        if (banned[i] == 0) {
-//            printf("%d\n", i);
+        if (banned[i] == 0 && visit_whole[i] == 0) {
+            printf("%d\n", i);
             vector<int> temp;
             temp.push_back(i);
-            dfs(i, i, temp, 1);
+            dfs(i, temp, i, 0, 99999999, -1, -1);
         }
     }
 
+    adjust_result();
     sort_result();
     print_result();
 
